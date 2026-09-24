@@ -31,7 +31,9 @@ import com.arjun.absolutra.ui.screens.AuthScreen
 import com.arjun.absolutra.ui.screens.BrowserScreen
 import com.arjun.absolutra.ui.screens.NotesScreen
 import com.arjun.absolutra.ui.screens.CanvasScreen
+import com.arjun.absolutra.ui.screens.DownloaderHubScreen
 import com.arjun.absolutra.ui.screens.CaptureSettingsScreen
+import com.arjun.absolutra.ui.screens.KeyboardSettingsScreen
 import com.arjun.absolutra.ui.screens.SettingsScreen
 import com.arjun.absolutra.ui.screens.TodoScreen
 import kotlinx.coroutines.launch
@@ -39,11 +41,13 @@ import kotlinx.coroutines.launch
 enum class AppScreen(val title: String) {
     Todo("Tasks"),
     Canvas("Canvas Boards"),
+    Downloader("Media Hub"),
     CaptureSettings("Screenshot Config"),
     Auth("Login"),
     Notes("Notes"),
     Browser("Browser"),
-    Settings("Settings")
+    Settings("Settings"),
+    KeyboardSettings("Keyboard Settings")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,11 +96,13 @@ fun MainScreen() {
             when (currentScreen) {
                 AppScreen.Todo -> TodoScreen(modifier = Modifier.padding(innerPadding))
                 AppScreen.Canvas -> CanvasScreen(modifier = Modifier.padding(innerPadding))
+                AppScreen.Downloader -> DownloaderHubScreen(modifier = Modifier.padding(innerPadding))
                 AppScreen.CaptureSettings -> CaptureSettingsScreen(modifier = Modifier.padding(innerPadding))
                 AppScreen.Auth -> AuthScreen(modifier = Modifier.padding(innerPadding))
                 AppScreen.Notes -> NotesScreen(modifier = Modifier.padding(innerPadding))
                 AppScreen.Browser -> BrowserScreen(modifier = Modifier.padding(innerPadding))
                 AppScreen.Settings -> SettingsScreen(modifier = Modifier.padding(innerPadding))
+                AppScreen.KeyboardSettings -> KeyboardSettingsScreen(modifier = Modifier.padding(innerPadding))
             }
         }
     }

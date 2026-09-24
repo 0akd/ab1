@@ -31,6 +31,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun NotesScreen(modifier: Modifier = Modifier) {
     var text by remember { mutableStateOf("") }
+    var lastSyncedText by remember { mutableStateOf("") }
+
     val db = remember { FirebaseFirestore.getInstance() }
     val clipboardManager = LocalClipboardManager.current
 
@@ -41,8 +43,10 @@ fun NotesScreen(modifier: Modifier = Modifier) {
 
                 if (snapshot != null && snapshot.exists()) {
                     val remoteText = snapshot.getString("text") ?: ""
-                    if (text != remoteText) {
+                    // Only apply a cloud update when there is no unsynced local typing.
+                    if (text == lastSyncedText && text != remoteText) {
                         text = remoteText
+                        lastSyncedText = remoteText
                     }
                 }
             }
@@ -50,11 +54,16 @@ fun NotesScreen(modifier: Modifier = Modifier) {
     }
 
     LaunchedEffect(text) {
-        if (text.isBlank()) return@LaunchedEffect
+        if (text == lastSyncedText) return@LaunchedEffect
+
         delay(1000)
 
+        val textToSync = text
+        // Mark synced before the write so our own snapshot does not replace newer keystrokes.
+        lastSyncedText = textToSync
+
         val noteData = hashMapOf(
-            "text" to text,
+            "text" to textToSync,
             "timestamp" to FieldValue.serverTimestamp()
         )
         db.collection("notes").document("shared_note").set(noteData)

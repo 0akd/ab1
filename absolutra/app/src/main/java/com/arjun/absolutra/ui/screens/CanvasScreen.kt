@@ -77,9 +77,9 @@ import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.arjun.absolutra.data.CANVAS_ROOT_DIR_KEY
+import com.arjun.absolutra.data.APP_ROOT_DIR_KEY
 import com.arjun.absolutra.data.dataStore
-import com.arjun.absolutra.data.migrateCanvasRootIfNeeded
+import com.arjun.absolutra.data.migrateAppRootIfNeeded
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -119,12 +119,12 @@ private fun hasImageReadAccess(context: Context): Boolean {
 @Composable
 fun CanvasScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val rootDirUriStr by context.dataStore.data.map { it[CANVAS_ROOT_DIR_KEY] }.collectAsState(initial = null)
+    val rootDirUriStr by context.dataStore.data.map { it[APP_ROOT_DIR_KEY] }.collectAsState(initial = null)
 
     var selectedBoard by remember { mutableStateOf<DocumentFile?>(null) }
 
     LaunchedEffect(Unit) {
-        context.migrateCanvasRootIfNeeded()
+        context.migrateAppRootIfNeeded()
     }
 
     BackHandler(enabled = selectedBoard != null) {
@@ -687,10 +687,13 @@ suspend fun loadBoards(context: Context, rootDirUriStr: String): List<DocumentFi
     return withContext(Dispatchers.IO) {
         try {
             val rootUri = Uri.parse(rootDirUriStr)
-            val rootDir = DocumentFile.fromTreeUri(context, rootUri) ?: return@withContext emptyList()
-            rootDir.listFiles()
-                .filter { it.isDirectory }
-                .sortedBy { it.name?.lowercase() ?: "" }
+            val baseDir = DocumentFile.fromTreeUri(context, rootUri) ?: return@withContext emptyList()
+            val absolutraDir = baseDir.findFile("absolutra") ?: baseDir.createDirectory("absolutra")
+            val canvasDir = absolutraDir?.findFile("canvas") ?: absolutraDir?.createDirectory("canvas")
+
+            canvasDir?.listFiles()
+                ?.filter { it.isDirectory }
+                ?.sortedBy { it.name?.lowercase() ?: "" } ?: emptyList()
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
@@ -702,8 +705,11 @@ suspend fun createBoard(context: Context, rootDirUriStr: String, name: String) {
     withContext(Dispatchers.IO) {
         try {
             val rootUri = Uri.parse(rootDirUriStr)
-            val rootDir = DocumentFile.fromTreeUri(context, rootUri) ?: return@withContext
-            rootDir.createDirectory(name)
+            val baseDir = DocumentFile.fromTreeUri(context, rootUri) ?: return@withContext
+            val absolutraDir = baseDir.findFile("absolutra") ?: baseDir.createDirectory("absolutra")
+            val canvasDir = absolutraDir?.findFile("canvas") ?: absolutraDir?.createDirectory("canvas")
+
+            canvasDir?.createDirectory(name)
         } catch (e: Exception) {
             e.printStackTrace()
         }

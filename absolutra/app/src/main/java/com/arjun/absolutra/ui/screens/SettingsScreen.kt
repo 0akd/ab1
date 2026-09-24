@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,8 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.edit
-import com.arjun.absolutra.data.CANVAS_ROOT_DIR_KEY
+import com.arjun.absolutra.data.APP_ROOT_DIR_KEY
 import com.arjun.absolutra.data.dataStore
+import com.arjun.absolutra.data.migrateAppRootIfNeeded
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -32,7 +34,11 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val canvasDirUriStr by context.dataStore.data.map { it[CANVAS_ROOT_DIR_KEY] }.collectAsState(initial = null)
+    val rootDirUriStr by context.dataStore.data.map { it[APP_ROOT_DIR_KEY] }.collectAsState(initial = null)
+
+    LaunchedEffect(Unit) {
+        context.migrateAppRootIfNeeded()
+    }
 
     val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
@@ -44,7 +50,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
             scope.launch {
                 context.dataStore.edit { prefs ->
-                    prefs[CANVAS_ROOT_DIR_KEY] = selectedUri.toString()
+                    prefs[APP_ROOT_DIR_KEY] = selectedUri.toString()
                 }
             }
         }
@@ -55,10 +61,10 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text("Canvas Boards Root Storage", style = MaterialTheme.typography.titleMedium)
+        Text("Absolutra Root Storage", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Select a root folder to store your Canvas Boards. Each board will be created as a sub-folder inside this directory.",
+            text = "Select a root folder to store your Absolutra data. A master folder named 'absolutra' will be created inside to hold both Canvas Boards and Todo videos safely isolated.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -72,9 +78,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.labelLarge
                 )
                 Text(
-                    text = canvasDirUriStr ?: "No location selected",
+                    text = rootDirUriStr ?: "No location selected",
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (canvasDirUriStr == null) {
+                    color = if (rootDirUriStr == null) {
                         MaterialTheme.colorScheme.error
                     } else {
                         MaterialTheme.colorScheme.onSurface
@@ -82,7 +88,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = { folderPickerLauncher.launch(null) }) {
-                    Text(if (canvasDirUriStr == null) "Select Root Folder" else "Change Root Folder")
+                    Text(if (rootDirUriStr == null) "Select Root Folder" else "Change Root Folder")
                 }
             }
         }
