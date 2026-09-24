@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">absolutra</string>
+    <string name="accessibility_service_description">Captures the part of the screen you select with the Absolutra floating button. Absolutra does not read or control other apps.</string>
+</resources>
